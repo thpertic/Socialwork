@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 const morgan = require('morgan');
 const cors = require('cors');
 
+const qs = require('qs');
+
 const argon2 = require ('argon2'); 
 
 const session = require("express-session");
@@ -14,6 +16,7 @@ const emailValidator = require('email-validator');
 
 const db = require('./db/index');
 const User = require('./db/user');
+const Post = require('./db/post');
 
 const {
     PORT = 4000,
@@ -31,6 +34,7 @@ const app = express();
 app.use(cookieParser());
 app.use(morgan('tiny'));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true })); // Support encoded bodies
 app.use(cors({
     origin: ORIGIN,
     credentials: true,
@@ -130,7 +134,7 @@ app.post('/auth/login', auth, (req, res) => {
 });
 
 app.post('/auth/signup', auth, async (req, res) => {
-    // CREATE 
+    // CREATE USER
     const email = req.body.email;
     const username = req.body.username;
     const password = req.body.password;
@@ -173,6 +177,47 @@ app.post('/auth/signup', auth, async (req, res) => {
         res.send({
             success: false,
             message: "Insert valid credentials."
+        })
+    }
+});
+
+app.post('/post', (req, res) => {
+    // CREATE POST
+    if (!isEmpty(req.session.userId)) {
+        // The request is done 'x-www-form-urlencoded'
+        if (req.body.content !== undefined && req.body.content != "") {
+            const post = new Post({
+                authorId: req.session.userId,
+                content: req.body.content,
+                created: new Date(),
+                upvotes: 0,
+                downvotes: 0
+            });
+    
+            post.save(e => {
+                if(e) {
+                    console.error(e);
+                    res.status(500).send({
+                        success: false,
+                        message: "The content couldn't be posted."
+                    });
+                } else {
+                    res.send({
+                        success: true,
+                        message: "The content has been posted correctly."
+                    });
+                }
+            });
+        } else {
+            res.send({
+                success: false,
+                message: "There is no content in the request."
+            })
+        }
+    } else {
+        res.send({
+            success: false,
+            message: "The user is not authenticated.",
         })
     }
 });
@@ -222,6 +267,68 @@ app.get('/user', (req, res) => {
             message: "The user isn't authenticated.",
         })
     }
+});
+
+app.get('/user/:id', (req, res) => {
+    User.findById(req.params.id, (e, user) => {
+        if (e) {
+            console.error(e)
+            res.send({
+                success: false,
+                message: e,
+            });
+        } else {
+            res.send({
+                username: user.username,
+                email: user.email,
+            });
+        }
+    });
+});
+
+app.get('/posts', (req, res) => {
+    const limit = 5;
+    if (req.session.postsToSkip == undefined)
+        // The first time to request some posts from this session
+        req.session.postsToSkip = 0;
+
+    Post.aggregate([ {
+            $lookup: {
+                from: 'users',
+                localField: "authorId",
+                foreignField: "_id",
+                as:  'user'
+            }  
+        }, 
+        { $sort: { "created": -1 } },
+        { $limit: req.session.postsToSkip + limit }, 
+        { $skip: req.session.postsToSkip }])/*.skip(req.session.postsToSkip).limit(5)*/
+        .then((posts) => {
+            /**
+             * Format:
+             * [{
+             *  _id: ObjectId(String),
+             * authorId: ObjectId(String),
+             * content: String,
+             * created: Date,
+             * upvotes: Number,
+             * downvotes: Number,
+             * __v: Number,
+             * user: [{
+             *      _id: ObjectId(String), --- Matches the authorId ---
+             *      email: String,
+             *      username: String,
+             *      password: String,
+             *      __v: 0 } 
+             *   }] 
+             * }, ...]
+             * 
+             * 100% there is a better way of doing this.
+             */
+            res.send({posts: posts });
+        });
+    // The next request skip the first 5 posts
+    req.session.postsToSkip = 0;
 });
 
 app.listen(PORT, () => {

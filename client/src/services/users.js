@@ -16,4 +16,7 @@ export default {
   getUser() {
     return api().get('/user');
   },
+  getAnotherUser(id) {
+    return api().get(`/user/${id}`);
+  },
 };
