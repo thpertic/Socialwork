@@ -2,7 +2,7 @@
   <div id="app">
     <div class="topnav">
       <a class="lefties" href="/">Home</a>
-      <a class="righties" href='/dashboard' style="padding: 0;">
+      <a class="righties" href='/personaldashboard' style="padding: 0;">
         <img src="./assets/account_icon.png"
           width="24px" style="margin: 10px; background-color: white;">
       </a>

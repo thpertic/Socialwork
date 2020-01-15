@@ -267,6 +267,8 @@ app.get('/user', (req, res) => {
             message: "The user isn't authenticated.",
         })
     }
+    // The user has changed page, the counter comes back to 0
+    req.session.postsToSkip = 0;
 });
 
 app.get('/user/:id', (req, res) => {
@@ -329,6 +331,40 @@ app.get('/posts', (req, res) => {
         });
     // The next request skip the first 5 posts
     req.session.postsToSkip = 0;
+    // TODO: =+ 5 when it's done
+});
+
+/**
+ * PUT
+ */
+app.put('/post/:id', (req, res) => {
+    Post.findById(req.params.id, (e, post) => {
+        if (e) {
+            console.error(e);
+            res.status(500).send({
+                success: false,
+                message: "The post couldn't be updated."
+            });
+        } else {
+            post.content = req.body.content;
+            post.upvotes = req.body.upvotes;
+            post.downvotes = req.body.downvotes;
+            post.save(e => {
+                if (e) {
+                    console.error(e);
+                    res.status(500).send({
+                        success: false,
+                        message: "The post couldn't be updated."
+                    });
+                } else {
+                    res.send({
+                        success: true,
+                        message: "The post has been updated successfully."
+                    });
+                }
+            });
+        }
+    });
 });
 
 app.listen(PORT, () => {

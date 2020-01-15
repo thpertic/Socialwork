@@ -32,39 +32,29 @@
     <br>
     <div>
       <div v-for="post in posts" :key="post._id">
-        <table style="border: 1px solid black">
-          <tr>
-            <td colspan='2' style="float: left;">
-              <a v-on:click="openUserInfo(post.user[0]._id)">{{ post.user[0].username }}</a>
-            </td>
-          </tr>
-          <tr>
-            <td colspan='2'>
-              {{ post.content }}
-            </td>
-          </tr>
-          <tr>
-            <td>Upvotes: {{ post.upvotes }}</td>
-            <td>Downvotes: {{post.downvotes}}</td>
-          </tr>
-        </table>
+        <!-- The Post component is used to manage each post separately -->
+        <Post :post=post></Post>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import Post from '../components/Post';
+
 import users from '../services/users';
 import posts from '../services/posts';
 import router from '../router/index';
 
 export default {
   name: 'Home',
+  components: {
+    Post,
+  },
   data() {
     return {
       content: '',
       posts: [],
-      userInfo: undefined,
     };
   },
   beforeCreate() {
@@ -86,17 +76,13 @@ export default {
       for (let i = 0; i < newPosts.length; i += 1) {
         this.posts.push(newPosts[i]);
       }
+      // TODO: Infite scroll?
     },
     submitPost() {
       if (this.content !== '') {
         posts.addPost({ content: this.content });
         this.content = '';
       }
-    },
-    async openUserInfo(id) {
-      const res = await users.getAnotherUser(id);
-      this.userInfo = res.data;
-      // TODO: Create a window to display the informations
     },
   },
 };
@@ -109,7 +95,7 @@ export default {
 }
 
 .newPost {
-  border: 1px solid black;
+  border: 1px solid rgb(151, 151, 151);
   width: 85%;
   padding: 10px;
 }

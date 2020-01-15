@@ -60,10 +60,7 @@ Make HTTP requests.
 
 ### Features
  - Signup and login creates a session 
-
-### Todos
-
- - Everything
+ - Home from which you can see the posts
 
 License
 ----

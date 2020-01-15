@@ -7,4 +7,7 @@ export default {
   addPost(content) {
     return api().post('/post', content);
   },
+  updatePost(id, content) {
+    return api().put(`/post/${id}`, content);
+  },
 };
