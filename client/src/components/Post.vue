@@ -30,6 +30,7 @@
 
 <script>
 import posts from '../services/posts';
+import users from '../services/users';
 
 export default {
   name: 'Post',
@@ -38,9 +39,31 @@ export default {
     return {
       upvoted: false,
       downvoted: false,
+      user: undefined,
     };
   },
+  mounted() {
+    this.updateVotes();
+  },
   methods: {
+    async updateVotes() {
+      const res = await users.getUser();
+      this.user = res.data;
+
+      // Check if this post was upvoted, if not check if it was downvoted
+      var upvote = this.user.upvotes.find((element) => {
+        return element === this.post._id;
+      });
+      if (upvote) 
+        this.upvoted = true;
+      else {
+        var downvote = this.user.downvotes.find((element) => {
+          return element === this.post._id;
+        });
+        if (downvote)
+          this.downvoted = true;
+      }
+    },
     addVote(typeOfVote) {
       switch (typeOfVote) {
         case ('upvote'):

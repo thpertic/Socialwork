@@ -253,6 +253,8 @@ app.get('/user', (req, res) => {
                 const user_response = {
                     email: user.email,
                     username: user.username,
+                    upvotes: user.upvotes,
+                    downvotes: user.downvotes,
                 };
                 res.status(200).send(user_response);
             } else
@@ -346,6 +348,72 @@ app.put('/post/:id', (req, res) => {
                 message: "The post couldn't be updated."
             });
         } else {
+            // If the PUT is on the votes, save it to the user's list
+            if (post.upvotes > req.body.upvotes) {
+                // The upvote was removed, so remove it from the list
+                User.updateOne(
+                    { _id: req.session.userId },
+                    { $pull: { upvotes: req.params.id } }, 
+                    e => {
+                        if (e) {
+                            console.error("Error in removing the post from the user's upvotes list");
+                            res.status(500).send({
+                                success: false,
+                                message: "The post couldn't be updated."
+                            });
+                        }
+                    }
+                );
+            } else if (post.upvotes < req.body.upvotes) {
+                // The upvote was added, so add it to the list
+                User.updateOne(
+                    { _id: req.session.userId },
+                    { $push: { upvotes: req.params.id } },
+                    e => {
+                        if (e) {
+                            console.error("Error in adding the post to the user's upvotes list");
+                            res.status(500).send({
+                                success: false,
+                                message: "The post couldn't be updated."
+                            });
+                        }
+                    }
+                );
+            }
+            // Not using 'else if' because can be modified both
+            if (post.downvotes > req.body.downvotes) {
+                // The downvote was removed, so remove it from the list
+                User.updateOne(
+                    { _id: req.session.userId },
+                    { $pull: { downvotes: req.params.id } },
+                    e => {
+                        if (e) {
+                            console.error("Error in removing the post to the user's downvotes list");
+                            res.status(500).send({
+                                success: false,
+                                message: "The post couldn't be updated."
+                            });
+                        }
+                    }  
+                );
+            } else if (post.downvotes < req.body.downvotes) {
+                // The downvote was added, so add it to the list
+                User.updateOne(
+                    { _id: req.session.userId },
+                    { $push: { downvotes: req.params.id } },
+                    e => {
+                        if (e) {
+                            console.error("Error in adding the post to the user's downvotes list");
+                            res.status(500).send({
+                                success: false,
+                                message: "The post couldn't be updated."
+                            });
+                        }
+                    }
+                );
+            }
+            
+            // Update the post
             post.content = req.body.content;
             post.upvotes = req.body.upvotes;
             post.downvotes = req.body.downvotes;

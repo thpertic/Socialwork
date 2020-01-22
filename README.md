@@ -22,10 +22,15 @@ If everything goes fine, you should be able to see something at:
 localhost:8080
 ```
 
-If the terminal complains for some package be sure to have the following packages  install, otherwise install it with:
+If the terminal complains for some package be sure to have the following packages installed, otherwise install it with:
 ```bash
 npm install <package-name>
 ```
+or run:
+```bash
+npm i
+```
+inside of the directory that complains.
 
 ### Packages
 
